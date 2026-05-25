@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>碎碎念</title>
+<style>
+  :root {
+    --bg: #fdfdfc;
+    --text: #222;
+    --muted: #999;
+    --link: #555;
+    --hover: #111;
+  }
+  .dark {
+    --bg: #1a1a1a;
+    --text: #ccc;
+    --muted: #666;
+    --link: #888;
+    --hover: #ddd;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 2;
+    -webkit-font-smoothing: antialiased;
+    transition: background .3s, color .3s;
+  }
+  .wrap { max-width: 600px; margin: 0 auto; padding: 80px 24px 120px; }
+  header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 72px;
+  }
+  header h1 { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: 1px; }
+  .theme-toggle {
+    font-size: 13px; color: var(--muted); cursor: pointer;
+    background: none; border: none; font-family: inherit;
+    padding: 0; line-height: 1;
+  }
+  .theme-toggle:hover { color: var(--text); }
+
+  .entry { margin-bottom: 64px; }
+  .entry-date {
+    font-size: 13px; color: var(--muted); margin-bottom: 20px;
+    display: block;
+  }
+  .entry-body p { margin-bottom: 18px; }
+  .entry-body p:last-child { margin-bottom: 0; }
+
+  a { color: var(--link); text-decoration: none; }
+  a:hover { color: var(--hover); }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 48px 16px 96px; }
+    header { margin-bottom: 48px; }
+    .entry { margin-bottom: 48px; }
+    .entry-body p { margin-bottom: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>碎碎念</h1>
+  <button class="theme-toggle" id="theme-btn" title="切换深色/浅色">暗</button>
+</header>
+
+<main id="diary-list"></main>
+
+</div>
+
+<script>
+var entries = [];
+
+function addEntry(date, body) {
+  entries.push({ date: date, body: body });
+}
+
+var fmt = function(ds) {
+  var d = new Date(ds);
+  return (d.getMonth()+1) + '月' + d.getDate() + '日';
+};
+
+function render() {
+  var h = '';
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    h += '<article class="entry"><span class="entry-date">' + fmt(e.date) + '</span><div class="entry-body">' + e.body + '</div></article>';
+  }
+  document.getElementById('diary-list').innerHTML = h;
+}
+
+// ---- 深色模式 ----
+(function() {
+  var saved = localStorage.getItem('theme');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var isDark = saved === 'dark' || (!saved && prefersDark);
+  var html = document.documentElement;
+  var btn = document.getElementById('theme-btn');
+
+  if (isDark) { html.classList.add('dark'); btn.textContent = '亮'; }
+
+  btn.addEventListener('click', function() {
+    if (html.classList.contains('dark')) {
+      html.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      btn.textContent = '暗';
+    } else {
+      html.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      btn.textContent = '亮';
+    }
+  });
+})();
+</script>
+
+<script>
+// ========== 日记内容 ==========
+
+addEntry("2026-05-25",
+  '<p>今天主要是在吸收和整理。上午用豆包查了一堆资料，下午在 WorkBuddy 上跑了不少东西，信息量很大但收获也扎实。</p>' +
+  '<p>先说说亚马逊这块。之前一直以为运营就是堆关键词、冲销量，今天才搞清楚 2026 年的算法逻辑完全不一样了——平台现在看重的是用户意图匹配和多模态视觉识别。说白了就是你的 listing 要真正解决用户的问题，图片要能说明白产品，而不是靠关键词密度硬怼。这个认知纠正挺重要的，不然一直在用老方法做新平台，怎么死的都不知道。</p>' +
+  '<p>顺便查了跨境企业的网络合规。同事之前推荐个人代理和流量卡，原来都有封号风险。正经应该用的是带资质的企业 SD-WAN 专线。FBA 清关发票也有好多坑，主体不对、信息缺失都可能导致清关出问题——这些以前根本没注意过。</p>' +
+  '<p>AI 工具这块，可能是今天最大的收获。之前各种"龙虾"系列、Codex、CodeBuddy、WorkBuddy，谁是谁完全搞不明白，一锅粥。今天总算理清了：CodeBuddy 管编程开发，WorkBuddy 管桌面办公，OpenAI Codex 也不只是写代码还能做定时自动化。还有个开源版 OpenCode，跟官方 Codex 是两回事。ComfyUI 也看了一下，节点式工作流比一键出图灵活太多了，适合批量做素材。把这些工具的关系捋顺之后整个人都清爽了，不用再纠结该用哪个，场景对上了就用。</p>' +
+  '<p>网络和 Mac 也补了点课。之前以为 SD-WAN Ready 就代表合规，其实那只是设备能力认证。真正的合规得看运营商有没有国际出口资质。这个区分挺关键的，不然花钱买了设备结果还是不合法。Mac 系统运维的基本逻辑也补了补，日常注意点就行。</p>' +
+  '<p>今天在 WorkBuddy 上跑的东西列一下：Q3 产品 OKR、AI 周报竞品分析、CodeBuddy 年终总结 PPT、亚马逊内容策略方案、AI 日报仪表盘、AI Agent 行业趋势 PPT。效率还行，主要是 WorkBuddy 输出风格切换和 PPT 生成确实省了不少手动排版的功夫。</p>' +
+  '<p>明天想做的：验证 SD-WAN 合规资质把方案落地、把 WorkBuddy 自动化周报流程跑通、摸一下 ComfyUI 基础工作流搭个模板、继续研究亚马逊新算法做 listing 优化。</p>' +
+  '<p>总的感觉是，今天好几个旧认知被更新了。尤其是亚马逊算法逻辑和 AI 工具定位这两块，之前迷糊的东西现在清晰了。这种感觉挺好的。另外今天折腾了半天把 Notion 日记搭起来了，最后发现还是这种极简网页看着舒服——Notion 排版太死了，不像日记本。那就用网页吧，简单点好。</p>'
+);
+
+render();
+</script>
+</body>
+</html>
