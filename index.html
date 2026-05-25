@@ -76,8 +76,8 @@
 <script>
 var entries = [];
 
-function addEntry(date, body) {
-  entries.push({ date: date, body: body });
+function addEntry(date, body, label) {
+  entries.push({ date: date, body: body, label: label });
 }
 
 var fmt = function(ds) {
@@ -89,7 +89,8 @@ function render() {
   var h = '';
   for (var i = 0; i < entries.length; i++) {
     var e = entries[i];
-    h += '<article class="entry"><span class="entry-date">' + fmt(e.date) + '</span><div class="entry-body">' + e.body + '</div></article>';
+    var dateText = e.label || fmt(e.date);
+    h += '<article class="entry"><span class="entry-date">' + dateText + '</span><div class="entry-body">' + e.body + '</div></article>';
   }
   document.getElementById('diary-list').innerHTML = h;
 }
@@ -130,6 +131,27 @@ addEntry("2026-05-25",
   '<p>今天在 WorkBuddy 上跑的东西列一下：Q3 产品 OKR、AI 周报竞品分析、CodeBuddy 年终总结 PPT、亚马逊内容策略方案、AI 日报仪表盘、AI Agent 行业趋势 PPT。效率还行，主要是 WorkBuddy 输出风格切换和 PPT 生成确实省了不少手动排版的功夫。</p>' +
   '<p>明天想做的：验证 SD-WAN 合规资质把方案落地、把 WorkBuddy 自动化周报流程跑通、摸一下 ComfyUI 基础工作流搭个模板、继续研究亚马逊新算法做 listing 优化。</p>' +
   '<p>总的感觉是，今天好几个旧认知被更新了。尤其是亚马逊算法逻辑和 AI 工具定位这两块，之前迷糊的东西现在清晰了。这种感觉挺好的。另外今天折腾了半天把 Notion 日记搭起来了，最后发现还是这种极简网页看着舒服——Notion 排版太死了，不像日记本。那就用网页吧，简单点好。</p>'
+);
+
+addEntry("2026-05-25",
+  '<p>今天还发生了一件事，值得单独记一笔：我把这个日记本搬到了互联网上。</p>' +
+  '<p>起因是这样的。下午把日记写完、Notion 也搭好之后，总觉得哪里不对。Notion 的排版确实不行——没有字重、没有间距控制、字体也换不了。一个日记本，打开像是文档管理器。WorkBuddy 给我看了几个独立博客，其中有个叫福群的（<a href="https://www.zhaofuqun.com">zhaofuqun.com</a>），写得真好。白底黑字，想写什么就写什么，不装。</p>' +
+  '<p>然后我就想，为什么我不做一个自己的？</p>' +
+  '<p>WorkBuddy 帮我搜了五个公认设计最好的个人博客来研究。不是看截图，是一篇一篇点进去看。这一看，学到的东西比看一百篇"博客设计指南"都多。</p>' +
+  '<p><a href="https://sive.rs">Derek Sivers</a> 的网站，没有导航栏。对，就是没有导航栏。我第一次打开愣了一下——页面上只有内容，连 Home、About 都没有。但翻了几篇之后我明白了：他不需要引导你去哪里。他的文字就是目的地。</p>' +
+  '<p><a href="https://paulgraham.com/articles.html">Paul Graham</a> 的网站更夸张。html 里还在用 &lt;table&gt; 布局和透明 GIF 控制间距。不是因为他不懂新技术——他可是 Y Combinator 创始人。他是刻意保持朴素。所有文章在视觉上完全平等，没有"精选"和"普通"之分。让内容自己说话。</p>' +
+  '<p><a href="https://antfu.me">Anthony Fu</a> 的博客是另一种路线。现代极简，有暗色模式，字重层级精致。证明极简不等于简陋。</p>' +
+  '<p><a href="https://gwern.net">Gwern</a> 的网站我看了很久。链接悬浮就能预览内容，脚注放在侧边而不是底部，长内容默认折叠、点开才展开。信息量大到吓人，但读起来不累——不是靠装饰，是靠更好的信息组织。</p>' +
+  '<p><a href="https://61.life">61.life</a>，光这个域名就是设计宣言。一切都短：域名短，标题短，段落短。</p>' +
+  '<p>五个博客看完，我发现一个规律：七个设计选择，五个博客全中——白底黑字、单列布局、无侧边栏、无弹窗广告、系统字体、无阅读量评论数、短段落多留白。这不是巧合。这是被验证过的答案。</p>' +
+  '<p>对照这五个标准，我的日记本之前还有一些多余的"设计"——条目之间有分隔线、footer 写了版本号、日期带着星期几。都是噪音。全删了。</p>' +
+  '<p>最让我纠结的是要不要上线。本地 HTML 看着挺舒服，但只能在电脑上看。手机打不开，也没法分享给别人。想了三秒钟——反正 GitHub Pages 免费，为什么不呢。</p>' +
+  '<p>部署的过程比想象中折腾。首先是 gh CLI 要安装，下载下来发现是 zip 不是 tar.gz，拆了两回。装好之后 OAuth 认证，设备码过期了又重来一次。仓库创建、代码推送倒挺顺利，但轮到启用 Pages 的时候卡住了——API 报 422，原来 token 没 workflow 权限，得用 legacy 模式。查了半天文档才调对参数。</p>' +
+  '<p>最后的网址：<a href="https://nautyd.github.io/jim-diary/">nautyd.github.io/jim-diary</a>。不算好记，但能用。以后买个域名绑上就行。</p>' +
+  '<p>整个过程从"想做一个博客"到"真的有一个博客"，大概花了两个小时。两个小时内读了五个顶级博客、提炼了设计原则、改了三版模板、装了 CLI、配好了 GitHub。效率不低。</p>' +
+  '<p>不过说实话，最大的收获不是博客本身。是白天学到的那些设计哲学——极简不是减少东西，是只留下对的东西。Derek Sivers 砍掉导航栏不是因为懒，是他知道读者不需要。Paul Graham 用表格布局不是守旧，是他不想让技术喧宾夺主。</p>' +
+  '<p>这个道理不只适用于做博客。可能也适用于做很多其他事情。</p>',
+  '5月25日 · 建站手记'
 );
 
 render();
