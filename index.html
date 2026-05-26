@@ -7,7 +7,7 @@
 <style>
   :root {
     --bg: #fdfdfc;
-    --text: #222;
+    --text: #333;
     --muted: #999;
     --link: #555;
     --hover: #111;
@@ -22,10 +22,11 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { font-size: 16px; }
   body {
-    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI Emoji", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans SC", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
     background: var(--bg);
     color: var(--text);
-    line-height: 2;
+    line-height: 1.8;
+    font-weight: 300;
     -webkit-font-smoothing: antialiased;
     transition: background .3s, color .3s;
   }
@@ -48,8 +49,41 @@
     font-size: 13px; color: var(--muted); margin-bottom: 20px;
     display: block;
   }
-  .entry-body p { margin-bottom: 18px; }
+  .fold-trigger { cursor: pointer; user-select: none; }
+  .fold-trigger:hover { color: var(--text); }
+  .entry-excerpt {
+    font-size: 15px; color: var(--muted); line-height: 1.7;
+  }
+  .entry-body p { margin-bottom: 1.2em; }
   .entry-body p:last-child { margin-bottom: 0; }
+
+  .year-divider {
+    text-align: center; margin: 80px 0 48px;
+    font-size: 12px; color: var(--muted); letter-spacing: 3px;
+  }
+  .year-divider span { padding: 0 20px; }
+
+  .page-footer {
+    text-align: center; margin-top: 96px; padding-top: 32px;
+    font-size: 13px; color: var(--muted);
+  }
+
+  .back-to-top {
+    position: fixed; bottom: 32px; right: 32px;
+    width: 40px; height: 40px; border-radius: 20px;
+    background: var(--bg); color: var(--muted);
+    border: 1px solid var(--muted); cursor: pointer;
+    font-size: 18px; line-height: 38px; text-align: center;
+    opacity: 0; visibility: hidden;
+    transition: opacity .3s, visibility .3s, color .3s, border-color .3s;
+    z-index: 99;
+  }
+  .back-to-top.visible { opacity: 1; visibility: visible; }
+  .back-to-top:hover { color: var(--text); border-color: var(--text); }
+
+  @media (max-width: 600px) {
+    .back-to-top { bottom: 20px; right: 16px; width: 36px; height: 36px; line-height: 34px; font-size: 16px; }
+  }
 
   a { color: var(--link); text-decoration: none; }
   a:hover { color: var(--hover); }
@@ -58,7 +92,7 @@
     .wrap { padding: 48px 16px 96px; }
     header { margin-bottom: 48px; }
     .entry { margin-bottom: 48px; }
-    .entry-body p { margin-bottom: 16px; }
+    .entry-body p { margin-bottom: 1em; }
   }
 </style>
 </head>
@@ -74,6 +108,8 @@
 
 </div>
 
+<button class="back-to-top" id="back-to-top" title="回顶部">&uarr;</button>
+
 <script>
 var entries = [];
 
@@ -86,35 +122,78 @@ var fmt = function(ds) {
   return (d.getMonth()+1) + '月' + d.getDate() + '日';
 };
 
+function getExcerpt(html, maxLen) {
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  var text = (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+  if (text.length <= maxLen) return text;
+  return text.slice(0, maxLen).replace(/[，,。.、；;！!？?」』】）\)]$/, '') + '……';
+}
+
+function wordCount(html) {
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  return (div.textContent || div.innerText || '').replace(/\s+/g, '').length;
+}
+
 function render() {
-  var SHOW_FULL = 20;  // 最新N条完整显示
+  var SHOW_FULL = 3;   // 最新N条完整展示
+  var EXCERPT_LEN = 120; // 摘要字数
   var h = '';
+  var lastYear = null;
+
   for (var i = 0; i < entries.length; i++) {
     var e = entries[i];
+    var yr = new Date(e.date).getFullYear();
+
+    // 年份分隔符
+    if (yr !== lastYear) {
+      if (lastYear !== null) {
+        h += '<div class="year-divider"><span>' + yr + '</span></div>';
+      }
+      lastYear = yr;
+    }
+
     var dateText = e.label || fmt(e.date);
+
     if (i < SHOW_FULL) {
+      // 完整显示
       h += '<article class="entry"><span class="entry-date">' + dateText + '</span><div class="entry-body">' + e.body + '</div></article>';
     } else {
-      // 旧条目折叠，只显示日期，点击展开
+      // 摘要模式
+      var excerpt = getExcerpt(e.body, EXCERPT_LEN);
       h += '<article class="entry entry-folded" data-idx="' + i + '">';
-      h += '<span class="entry-date fold-trigger" style="cursor:pointer; user-select:none;">' + dateText + ' ▸</span>';
+      h += '<span class="entry-date fold-trigger">' + dateText + '</span>';
+      h += '<div class="entry-excerpt">' + excerpt + '</div>';
       h += '<div class="entry-body" style="display:none;">' + e.body + '</div>';
       h += '</article>';
     }
   }
+
+  // 页脚统计
+  var totalWords = 0;
+  for (var k = 0; k < entries.length; k++) {
+    totalWords += wordCount(entries[k].body);
+  }
+  h += '<footer class="page-footer">共 ' + entries.length + ' 篇日记 · 约 ' + (totalWords >= 10000 ? (totalWords/10000).toFixed(1) + ' 万' : totalWords) + ' 字</footer>';
+
   document.getElementById('diary-list').innerHTML = h;
 
-  // 绑定折叠条目的点击展开
+  // 绑定折叠条目点击
   var triggers = document.querySelectorAll('.fold-trigger');
   for (var j = 0; j < triggers.length; j++) {
     triggers[j].addEventListener('click', function() {
-      var body = this.nextElementSibling;
+      var article = this.parentElement;
+      var body = article.querySelector('.entry-body');
+      var excerpt = article.querySelector('.entry-excerpt');
       if (body.style.display === 'none') {
         body.style.display = 'block';
-        this.textContent = this.textContent.replace('▸', '▾');
+        if (excerpt) excerpt.style.display = 'none';
+        this.classList.add('expanded');
       } else {
         body.style.display = 'none';
-        this.textContent = this.textContent.replace('▾', '▸');
+        if (excerpt) excerpt.style.display = 'block';
+        this.classList.remove('expanded');
       }
     });
   }
@@ -140,6 +219,28 @@ function render() {
       localStorage.setItem('theme', 'dark');
       btn.textContent = '亮';
     }
+  });
+})();
+
+// ---- 回顶部 ----
+(function() {
+  var btn = document.getElementById('back-to-top');
+  var ticking = false;
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      requestAnimationFrame(function() {
+        if (window.scrollY > window.innerHeight) {
+          btn.classList.add('visible');
+        } else {
+          btn.classList.remove('visible');
+        }
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+  btn.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 })();
 </script>
