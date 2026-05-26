@@ -43,6 +43,7 @@
   .theme-toggle:hover { color: var(--text); }
 
   .entry { margin-bottom: 64px; }
+  .entry-folded { margin-bottom: 28px; }
   .entry-date {
     font-size: 13px; color: var(--muted); margin-bottom: 20px;
     display: block;
@@ -77,7 +78,7 @@
 var entries = [];
 
 function addEntry(date, body, label) {
-  entries.push({ date: date, body: body, label: label });
+  entries.unshift({ date: date, body: body, label: label });
 }
 
 var fmt = function(ds) {
@@ -86,13 +87,37 @@ var fmt = function(ds) {
 };
 
 function render() {
+  var SHOW_FULL = 20;  // 最新N条完整显示
   var h = '';
   for (var i = 0; i < entries.length; i++) {
     var e = entries[i];
     var dateText = e.label || fmt(e.date);
-    h += '<article class="entry"><span class="entry-date">' + dateText + '</span><div class="entry-body">' + e.body + '</div></article>';
+    if (i < SHOW_FULL) {
+      h += '<article class="entry"><span class="entry-date">' + dateText + '</span><div class="entry-body">' + e.body + '</div></article>';
+    } else {
+      // 旧条目折叠，只显示日期，点击展开
+      h += '<article class="entry entry-folded" data-idx="' + i + '">';
+      h += '<span class="entry-date fold-trigger" style="cursor:pointer; user-select:none;">' + dateText + ' ▸</span>';
+      h += '<div class="entry-body" style="display:none;">' + e.body + '</div>';
+      h += '</article>';
+    }
   }
   document.getElementById('diary-list').innerHTML = h;
+
+  // 绑定折叠条目的点击展开
+  var triggers = document.querySelectorAll('.fold-trigger');
+  for (var j = 0; j < triggers.length; j++) {
+    triggers[j].addEventListener('click', function() {
+      var body = this.nextElementSibling;
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        this.textContent = this.textContent.replace('▸', '▾');
+      } else {
+        body.style.display = 'none';
+        this.textContent = this.textContent.replace('▾', '▸');
+      }
+    });
+  }
 }
 
 // ---- 深色模式 ----
