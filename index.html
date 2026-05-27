@@ -1,7 +1,7 @@
 <!--
   星风过跨境 · v2.0.0
   以AI为翼，如风穿梭于全平台跨境电商实战
-  四层架构：星风出海 | 每日英阅 | AI工具 | 艾尔文酒馆
+  四层架构：星风出海 | 跨境英词充电站 | AI工具 | 艾尔文酒馆
   设计哲学：极简 · 白底黑字 · 单列 · 系统字体 · 零依赖
 -->
 <!DOCTYPE html>
@@ -264,11 +264,12 @@ var _hmt = _hmt || [];
   </div>
 </div>
 
-<!-- ====== 每日英阅 ====== -->
+<!-- ====== 跨境英词充电站 ====== -->
 <div class="tab-content" id="tab-english">
   <div class="section-intro">
     <p>跨境真实语境英语充电站。从每日高频词打卡起步，拆解 Listing、客诉、直播里的地道表达，搭配 AI 润色的例句与用法解析，把零散单词变成能直接落地的实用能力。</p>
   </div>
+  <div id="daily-quote" style="text-align:center;padding:16px 20px;margin-bottom:20px;border-radius:12px;background:linear-gradient(135deg,rgba(255,193,7,0.08),rgba(255,107,107,0.06));border:1px solid rgba(255,193,7,0.15);"></div>
   <div class="en-subtabs">
     <button class="en-subtab active" data-esub="learn">📖 学习</button>
     <button class="en-subtab" data-esub="review">🔁 复习</button>
@@ -438,6 +439,48 @@ function speakSentence(sent){
 }
 
 function stripHtml(s){var d=document.createElement('div');d.innerHTML=s;return d.textContent||d.innerText||'';}
+
+// 每日金句
+function getDailyQuote(){
+  var quotes=[
+    {en:'The best way to predict the future is to create it.',zh:'预测未来的最好方式，就是去创造它。',author:'Peter Drucker'},
+    {en:'Believe you can and you\'re halfway there.',zh:'相信你可以，你就已经成功了一半。',author:'Theodore Roosevelt'},
+    {en:'Do what you can, with what you have, where you are.',zh:'在你所处之地，用你所有之物，做你所能之事。',author:'Theodore Roosevelt'},
+    {en:'It always seems impossible until it\'s done.',zh:'在完成之前，一切总看似不可能。',author:'Nelson Mandela'},
+    {en:'The only way to do great work is to love what you do.',zh:'做出伟大成就的唯一途径，是热爱你所做的事。',author:'Steve Jobs'},
+    {en:'Small steps every day lead to big results.',zh:'每天一小步，积累成巨大的成果。',author:''},
+    {en:'You are never too old to set another goal or to dream a new dream.',zh:'设定新目标、追逐新梦想，永远不会太晚。',author:'C.S. Lewis'},
+    {en:'Happiness is not something ready-made. It comes from your own actions.',zh:'幸福不是现成的东西，它来自你自身的行动。',author:'Dalai Lama'},
+    {en:'Don\'t watch the clock; do what it does. Keep going.',zh:'不要盯着时钟看；像它那样，不断前行。',author:'Sam Levenson'},
+    {en:'The secret of getting ahead is getting started.',zh:'领先的秘诀，就是现在开始。',author:'Mark Twain'},
+    {en:'Act as if what you do makes a difference. It does.',zh:'要相信你所做的事会带来改变——它确实会。',author:'William James'},
+    {en:'What we think, we become.',zh:'我们心中所想，终将成就我们自己。',author:'Buddha'},
+    {en:'Success is not final, failure is not fatal: it is the courage to continue that counts.',zh:'成功不是终点，失败也非末日：重要的是继续前行的勇气。',author:'Winston Churchill'},
+    {en:'Strive not to be a success, but rather to be of value.',zh:'不要努力追求成功，而要努力成为有价值的人。',author:'Albert Einstein'},
+    {en:'Your attitude, not your aptitude, will determine your altitude.',zh:'决定你高度的，不是你的天赋，而是你的态度。',author:'Zig Ziglar'},
+    {en:'Life is 10% what happens to us and 90% how we react to it.',zh:'生活有10%是发生在我们身上的事，90%是我们如何回应。',author:'Charles R. Swindoll'},
+    {en:'Fall seven times, stand up eight.',zh:'跌倒七次，第八次站起来。',author:'日本谚语'},
+    {en:'Turn your wounds into wisdom.',zh:'将你的伤痕化为智慧。',author:'Oprah Winfrey'},
+    {en:'Be the change that you wish to see in the world.',zh:'欲变世界，先变其身。',author:'Mahatma Gandhi'},
+    {en:'The mind is everything. What you think you become.',zh:'心是一切之源。你怎样想，便怎样成为。',author:'Buddha'},
+    {en:'Difficult roads often lead to beautiful destinations.',zh:'艰难的道路，往往通向最美的目的地。',author:''},
+    {en:'Every moment is a fresh beginning.',zh:'每一刻都是崭新的开始。',author:'T.S. Eliot'},
+    {en:'Start where you are. Use what you have. Do what you can.',zh:'从你所在之处开始，用你所有之物，做你所能之事。',author:'Arthur Ashe'},
+    {en:'The only impossible journey is the one you never begin.',zh:'唯一不可能的旅程，是你从未开始的那一个。',author:'Tony Robbins'},
+    {en:'Doubt kills more dreams than failure ever will.',zh:'怀疑比失败扼杀了更多的梦想。',author:'Suzy Kassem'},
+    {en:'The future belongs to those who believe in the beauty of their dreams.',zh:'未来属于那些相信自己梦想之美的人。',author:'Eleanor Roosevelt'},
+    {en:'Keep your face always toward the sunshine — and shadows will fall behind you.',zh:'永远面朝阳光，阴影便会落在你身后。',author:'Walt Whitman'},
+    {en:'Life shrinks or expands in proportion to one\'s courage.',zh:'生活的广狭，与一个人的勇气成正比。',author:'Anaïs Nin'},
+    {en:'We rise by lifting others.',zh:'助人成长，自己亦成长。',author:'Robert Ingersoll'},
+    {en:'Everything you\'ve ever wanted is on the other side of fear.',zh:'你所渴望的一切，都在恐惧的另一边。',author:'George Addair'}
+  ];
+  var now=new Date(),d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  var dayOfYear=Math.floor((d-new Date(now.getFullYear(),0,0))/(1000*60*60*24));
+  var q=quotes[dayOfYear%quotes.length];
+  return '<div style="font-size:15px;line-height:1.8;font-style:italic;color:var(--text);">✨ '+q.en+'</div>'
+    +'<div style="font-size:13px;margin-top:6px;opacity:0.75;">'+q.zh+(q.author?' — <i>'+q.author+'</i>':'')+'</div>';
+}
+document.getElementById('daily-quote').innerHTML=getDailyQuote();
 
 // 学习页
 function renderLearn(){
