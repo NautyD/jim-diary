@@ -93,7 +93,11 @@
   /* ====== 日记条目 ====== */
   .entry { margin-bottom: 64px; }
   .entry-folded { margin-bottom: 28px; }
-  .entry-date { font-size: 13px; color: var(--muted); margin-bottom: 20px; display: block; }
+  .entry-date { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+  .entry-title {
+    font-size: 18px; font-weight: 500; color: var(--text);
+    margin-bottom: 18px; line-height: 1.5;
+  }
   .fold-trigger { cursor: pointer; user-select: none; }
   .fold-trigger:hover { color: var(--text); }
   .entry-excerpt { font-size: 15px; color: var(--muted); line-height: 1.7; }
@@ -305,7 +309,7 @@ var _hmt = _hmt || [];
 <!-- ====== 艾尔文酒馆（日记） ====== -->
 <div class="tab-content active" id="tab-jiuguan">
   <div class="section-intro">
-    <p>自留地与成长碎碎念。记录 42 岁跨境人的日常复盘、生活感悟与心路历程，无关流量与数据，只写真实的成长与松弛，延续从艾尔文森林到跨境战场的热爱与坚持。</p>
+    <p>自留地与成长碎碎念。记录跨境人的日常复盘、生活感悟与心路历程，无关流量与数据，只写真实的成长与松弛，延续从艾尔文森林到跨境战场的热爱与坚持。</p>
   </div>
   <main id="diary-list"></main>
 </div>
@@ -368,12 +372,18 @@ function renderDiary() {
   for (var i = 0; i < entries.length; i++) {
     var e = entries[i], yr = new Date(e.date).getFullYear();
     if (yr !== lastYear) { if (lastYear!==null) h+='<div class="year-divider"><span>'+yr+'</span></div>'; lastYear=yr; }
-    var dateText = e.label || fmt(e.date);
+    var dateLabel = fmt(e.date);
     if (i < SHOW_FULL) {
-      h += '<article class="entry"><span class="entry-date">'+dateText+'</span><div class="entry-body">'+e.body+'</div></article>';
+      h += '<article class="entry"><span class="entry-date">'+dateLabel+'</span>';
+      if (e.label) h += '<h2 class="entry-title">'+e.label+'</h2>';
+      h += '<div class="entry-body">'+e.body+'</div></article>';
     } else {
       var excerpt = getExcerpt(e.body, EXCERPT_LEN);
-      h += '<article class="entry entry-folded" data-idx="'+i+'"><span class="entry-date fold-trigger">'+dateText+'</span><div class="entry-excerpt">'+excerpt+'</div><div class="entry-body" style="display:none;">'+e.body+'</div></article>';
+      var foldLabel = e.label || dateLabel;
+      h += '<article class="entry entry-folded" data-idx="'+i+'"><span class="entry-date">'+dateLabel+'</span>';
+      if (e.label) h += '<span class="entry-title fold-trigger">'+e.label+'</span>';
+      else h += '<span class="entry-date fold-trigger">'+dateLabel+'</span>';
+      h += '<div class="entry-excerpt">'+excerpt+'</div><div class="entry-body" style="display:none;">'+e.body+'</div></article>';
     }
   }
   var totalWords = 0; for (var k=0;k<entries.length;k++) totalWords+=wordCount(entries[k].body);
