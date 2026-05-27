@@ -618,21 +618,27 @@ function renderReviewCard(item,isDue,allDone){
   return '<div class="en-review-card">'+badge+'<div style="font-size:16px;font-weight:600;margin:4px 0;">'+w.word+' <span style="font-size:12px;color:var(--muted);font-weight:400;">'+w.phonetic+'</span></div><div style="font-size:13px;color:var(--text);">'+w.meaning+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">'+stripHtml(w.example_en)+'</div>'+actions+'</div>';
 }
 function markReviewed(word,round){
+  if(!confirm('确认「'+word+'」已完成第 '+round+' 轮复习？'))return;
   var key='eb_'+word, records=[]; try{records=JSON.parse(localStorage.getItem(key)||'[]');}catch(e){}
   records.push({date:TODAY,round:round,result:'yes'}); localStorage.setItem(key,JSON.stringify(records)); renderReview();
 }
 
 // 听力页
-var listenIdx=0;
+var listenIdx=0, listenWords=[], listenCount=parseInt(localStorage.getItem('listenCount')||'5')||5;
+function initListen(){
+  var shuffled=ALL_WORDS.slice(0); for(var i=shuffled.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=shuffled[i];shuffled[i]=shuffled[j];shuffled[j]=t;}
+  listenWords=shuffled.slice(0,Math.min(listenCount||shuffled.length,shuffled.length)); listenIdx=0;
+}
 function renderListen(){
   var c=document.getElementById('esub-listen'); if(ALL_WORDS.length===0){c.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">暂无单词</div>';return;}
-  var w=ALL_WORDS[listenIdx];
+  if(listenWords.length===0)initListen(); if(listenIdx>=listenWords.length)listenIdx=0;
+  var w=listenWords[listenIdx];
   var others=[]; for(var i=0;i<ALL_WORDS.length;i++){if(ALL_WORDS[i].word!==w.word)others.push(ALL_WORDS[i]);}
   for(var i=others.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=others[i];others[i]=others[j];others[j]=t;}
   var choices=[]; for(var i=0;i<3&&i<others.length;i++)choices.push(others[i].word); choices.push(w.word);
   for(var i=choices.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=choices[i];choices[i]=choices[j];choices[j]=t;}
   var optHtml=''; for(var o=0;o<choices.length;o++) optHtml+='<button onclick="checkListen(\''+choices[o]+'\',\''+w.word+'\',this)" style="padding:10px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);font-size:14px;cursor:pointer;font-family:inherit;">'+choices[o]+'</button>';
-  c.innerHTML='<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">单词 '+(listenIdx+1)+' / '+ALL_WORDS.length+'</div>'
+  c.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><div style="font-size:12px;color:var(--muted);">单词 '+(listenIdx+1)+' / '+listenWords.length+'</div><div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);">数量：<select onchange="changeListenCount(this.value)" style="padding:2px 4px;border:1px solid var(--card-border);border-radius:4px;font-size:11px;background:var(--bg);"><option value="5"'+(listenCount===5?' selected':'')+'>5</option><option value="10"'+(listenCount===10?' selected':'')+'>10</option><option value="15"'+(listenCount===15?' selected':'')+'>15</option><option value="20"'+(listenCount===20?' selected':'')+'>20</option><option value="0"'+(listenCount===0?' selected':'')+'>全部</option></select></div></div>'
     +'<div class="en-listen-card"><div class="en-listen-icon" onclick="speakWord(\''+w.word+'\')">🔊</div><div><div style="font-size:18px;font-weight:600;">'+w.word+'</div><div style="font-size:12px;color:var(--muted);">'+w.phonetic+'</div><div style="font-size:13px;color:var(--muted);margin-top:4px;">'+w.meaning+'</div></div></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;" id="listen-opts">'+optHtml+'</div>'
     +'<div style="display:flex;gap:8px;"><button class="en-btn" onclick="listenPrev()">← 上一个</button><button class="en-btn" onclick="listenNext()" style="border-color:var(--star);color:var(--star);">下一个 →</button></div>';
@@ -642,20 +648,22 @@ function checkListen(sel,cor,btn){
   var btns=document.querySelectorAll('#listen-opts button'); for(var i=0;i<btns.length;i++){btns[i].disabled=true;btns[i].style.opacity='0.6';}
   if(sel===cor){btn.style.borderColor='#16a34a';btn.style.color='#16a34a';} else {btn.style.borderColor='#dc2626';btn.style.color='#dc2626';for(var i=0;i<btns.length;i++){if(btns[i].textContent.trim()===cor){btns[i].style.borderColor='#16a34a';btns[i].style.color='#16a34a';}}} speakWord(cor);
 }
-function listenNext(){listenIdx=(listenIdx+1)%ALL_WORDS.length;renderListen();}
-function listenPrev(){listenIdx=(listenIdx-1+ALL_WORDS.length)%ALL_WORDS.length;renderListen();}
+function listenNext(){listenIdx=(listenIdx+1)%listenWords.length;renderListen();}
+function listenPrev(){listenIdx=(listenIdx-1+listenWords.length)%listenWords.length;renderListen();}
+function changeListenCount(val){listenCount=parseInt(val)||0;localStorage.setItem('listenCount',val);initListen();renderListen();}
 
 // 拼写页
-var quizWords=[], quizIdx=0, quizScore=0;
+var quizWords=[], quizIdx=0, quizScore=0, quizCount=parseInt(localStorage.getItem('quizCount')||'5')||5;
 function startQuiz(){
   var shuffled=ALL_WORDS.slice(0); for(var i=shuffled.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=shuffled[i];shuffled[i]=shuffled[j];shuffled[j]=t;}
-  quizWords=shuffled.slice(0,Math.min(5,shuffled.length)); quizIdx=0; quizScore=0;
+  var count=quizCount||shuffled.length;
+  quizWords=shuffled.slice(0,Math.min(count,shuffled.length)); quizIdx=0; quizScore=0;
   var box=document.getElementById('quiz-box');
   box.innerHTML='<div class="en-quiz-progress" id="qz-progress">第 1 / '+quizWords.length+' 题</div><div class="en-quiz-bar"><div class="en-quiz-fill" id="qz-fill"></div></div><div class="en-quiz-word" id="qz-word"></div><div class="en-quiz-hint" id="qz-hint"></div><input class="en-quiz-input" id="qz-input" type="text" placeholder="输入英文单词..." autocomplete="off" autocapitalize="off" spellcheck="false"><div class="en-quiz-result" id="qz-result"></div><div class="en-quiz-btns"><button class="en-quiz-btn" onclick="showHint()">💡 提示</button><button class="en-quiz-btn primary" onclick="checkAnswer()">✅ 检查</button><button class="en-quiz-btn" onclick="nextQuiz()" style="display:none" id="btn-nq">下一题 →</button></div><div class="en-quiz-result" id="qz-score"></div>';
   renderQuizQ();
 }
 function renderQuizQ(){
-  if(quizIdx>=quizWords.length){ var pct=Math.round(quizScore/quizWords.length*100); document.getElementById('quiz-box').innerHTML='<div style="text-align:center;padding:30px;"><div style="font-size:36px;margin-bottom:12px;">'+(pct===100?'🏆':'💪')+'</div><div style="font-size:18px;font-weight:600;margin-bottom:8px;">得分：'+quizScore+' / '+quizWords.length+'（'+pct+'%）</div><button class="en-quiz-btn primary" onclick="startQuiz()">🔄 再来一轮</button></div>'; return; }
+  if(quizIdx>=quizWords.length){ var pct=Math.round(quizScore/quizWords.length*100); document.getElementById('quiz-box').innerHTML='<div style="text-align:center;padding:30px;"><div style="font-size:36px;margin-bottom:12px;">'+(pct===100?'🏆':'💪')+'</div><div style="font-size:18px;font-weight:600;margin-bottom:8px;">得分：'+quizScore+' / '+quizWords.length+'（'+pct+'%）</div><div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0;"><span style="font-size:12px;color:var(--muted);">数量：</span><select id="qc-sel" style="padding:4px 8px;border:1px solid var(--card-border);border-radius:6px;font-size:12px;background:var(--bg);"><option value="5"'+(quizCount===5?' selected':'')+'>5</option><option value="10"'+(quizCount===10?' selected':'')+'>10</option><option value="15"'+(quizCount===15?' selected':'')+'>15</option><option value="20"'+(quizCount===20?' selected':'')+'>20</option><option value="0"'+(quizCount===0?' selected':'')+'>全部</option></select></div><button class="en-quiz-btn primary" onclick="changeQuizCount()">🔄 再来一轮</button></div>'; return; }
   var w=quizWords[quizIdx];
   document.getElementById('qz-progress').textContent='第 '+(quizIdx+1)+' / '+quizWords.length+' 题';
   document.getElementById('qz-fill').style.width=(quizIdx/quizWords.length*100)+'%';
@@ -673,9 +681,11 @@ function checkAnswer(){
 }
 function showHint(){var w=quizWords[quizIdx],hint=w.word[0];for(var i=1;i<w.word.length;i++)hint+=' _';document.getElementById('qz-result').innerHTML='💡 '+hint+' ('+w.word.length+'字母)';document.getElementById('qz-result').style.color='var(--star)';}
 function nextQuiz(){quizIdx++;renderQuizQ();}
+function changeQuizCount(){var sel=document.getElementById('qc-sel');if(sel){quizCount=parseInt(sel.value)||0;localStorage.setItem('quizCount',sel.value);}startQuiz();}
 
 // ====== 英文板块初始化 ======
 renderLearn();
+initListen();
 
 /* ================================================================
    Tab 切换系统
